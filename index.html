@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Image Sliders - Colorful but Dull</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: flex-start; /* Align items from the start */
+            align-items: center;
+            flex-direction: column; /* Stack elements vertically */
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px; /* Add some padding around the content */
+            background-color: #aeb8c2; /* A dull blue-grey */
+        }
+
+        .header-text {
+            font-size: 2.5em;
+            font-weight: 300;
+            color: #4a5568; /* A dull, dark blue-grey */
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+            margin-bottom: 40px; /* More space below the main heading */
+            margin-top: 20px; /* Space above the main heading */
+        }
+
+        .slider-section {
+            display: flex;
+            /* Changed flex-direction to row (default) and added wrap */
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 40px; /* Space between each slider */
+            width: 90%; /* Control overall width of the slider sections */
+            /* Widened max-width to allow side-by-side */
+            max-width: 1400px; 
+            margin-bottom: 40px; /* Space below all sliders */
+        }
+
+        /* Added this new wrapper class */
+        .slider-wrapper {
+            flex: 1 1 500px; /* Allows items to grow/shrink with a basis of 500px */
+            max-width: 600px; /* Each slider won't get wider than 600px */
+            min-width: 320px; /* Ensures a minimum width on small screens */
+        }
+
+        .slider-container {
+            position: relative;
+            width: 100%; /* Each slider container takes full width of its section */
+            max-width: 600px; /* Maintain individual max-width */
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+            background-color: #dbe4eb; /* A dull light blue */
+            border: 1px solid #c0c8cf; /* A dull border */
+            margin: 0 auto; /* Center individual sliders within the section */
+            /* Ensure container fits image */
+            aspect-ratio: 600 / 400; 
+        }
+
+        .slider-title {
+            font-size: 1.5em;
+            color: #5f748c; /* Dull blue-grey for titles */
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .slider {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            height: 100%; /* Make slider fill container */
+        }
+
+        /* New .slide style */
+        .slide {
+            width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+            position: relative;
+            /* Added for the error message */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover; /* Cover the area, don't distort */
+            filter: grayscale(40%) contrast(80%);
+        }
+
+        /* New .image-caption style */
+        .image-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 12px;
+            font-size: 0.9em;
+            text-align: center;
+            box-sizing: border-box; /* Include padding in width */
+            z-index: 5;
+        }
+        
+        /* New .no-images-message style */
+        .no-images-message {
+            display: flex;
+            flex-direction: column; /* Stack error message lines */
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #5f748c;
+            font-size: 1.1em;
+            padding: 20px;
+            text-align: center;
+            box-sizing: border-box; /* Ensure padding is contained */
+            word-break: break-all; /* Break long file paths */
+        }
+
+
+        .prev-button, .next-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(100, 149, 237, 0.4);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 1.5em;
+            border-radius: 5px;
+            z-index: 10;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .prev-button {
+            left: 10px;
+        }
+
+        .next-button {
+            right: 10px;
+        }
+
+        .prev-button:hover, .next-button:hover {
+            background-color: rgba(100, 149, 237, 0.6);
+        }
+
+        .dots-container {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            z-index: 10;
+            /* Adjust position so it doesn't overlap caption */
+            /* This is now handled by the caption moving to the bottom */
+        }
+
+        .dot {
+            height: 10px;
+            width: 10px;
+            background-color: rgba(169, 169, 169, 0.7);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .dot.active {
+            background-color: #879ab5;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="header-text">We Won't Forget</h1>
+
+    <div class="slider-section">
+        <!-- Slider 1 -->
+        <div class="slider-wrapper">
+            <h2 class="slider-title">Memories of the Past</h2>
+            <div class="slider-container">
+                <!-- Images will be dynamically inserted here -->
+                <div class="slider" id="slider1"></div>
+                <button class="prev-button" data-slider="1">&#10094;</button>
+                <button class="next-button" data-slider="1">&#10095;</button>
+                <!-- Dots will be dynamically inserted here -->
+                <div class="dots-container" data-slider="1"></div>
+            </div>
+        </div>
+
+        <!-- Slider 2 -->
+        <div class="slider-wrapper">
+            <h2 class="slider-title">Moments of Reflection</h2>
+            <div class="slider-container">
+                <div class="slider" id="slider2"></div>
+                <button class="prev-button" data-slider="2">&#10094;</button>
+                <button class="next-button" data-slider="2">&#10095;</button>
+                <div class="dots-container" data-slider="2"></div>
+            </div>
+        </div>
+
+        <!-- Slider 3 -->
+        <div class="slider-wrapper">
+            <h2 class="slider-title">Echoes of Resilience</h2>
+            <div class="slider-container">
+                <div class="slider" id="slider3"></div>
+                <button class="prev-button" data-slider="3">&#10094;</button>
+                <button class="next-button" data-slider="3">&#10095;</button>
+                <div class="dots-container" data-slider="3"></div>
+            </div>
+        </div>
+
+        <!-- Slider 4 -->
+        <div class="slider-wrapper">
+            <h2 class="slider-title">Stories Untold</h2>
+            <div class="slider-container">
+                <div class="slider" id="slider4"></div>
+                <button class="prev-button" data-slider="4">&#10094;</button>
+                <button class="next-button" data-slider="4">&#10095;</button>
+                <div class="dots-container" data-slider="4"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. SAVE THIS HTML FILE in your 'C:\Users\HP\Desktop\test' folder ---
+
+        // --- 2. EDIT THIS DATA TO MATCH YOUR FOLDERS AND IMAGES ---
+        //    - 'folder' must be the relative path (e.g., 'S1/').
+        //    - 'filenames' is a list of your image names WITHOUT the extension.
+        const slidersData = [
+            {
+                id: 'slider1',
+                title: 'Memories of the Past',
+                folder: 'S1/', // Corresponds to folder 'test/S1'
+                filenames: [
+                    'TEST0826PM2710',     // Your example: Oct 27, 8:26 PM
+                    'MORNING1030AM2710',  // Oct 27, 10:30 AM
+                    'MIDNIGHT1205AM2710', // Oct 27, 00:05 AM
+                    'NEXTDAY0900AM2810'   // Oct 28, will not show today
+                ]
+            },
+            {
+                id: 'slider2',
+                title: 'Moments of Reflection',
+                folder: 'S2/',
+                filenames: [
+                    'QUIET0800AM2710',    // Oct 27, 8:00 AM
+                    'VIGIL0600PM2710',    // Oct 27, 6:00 PM
+                    'ARCHIVED0200PM2610'  // Oct 26, will not show today
+                ]
+            },
+            {
+                id: 'slider3',
+                title: 'Echoes of Resilience',
+                folder: 'S3/',
+                filenames: [
+                    'COMMUNITY1100AM2710', // Oct 27, 11:00 AM
+                    'HELPING1130AM2710',   // Oct 27, 11:30 AM
+                    'STRONG0445PM2710'     // Oct 27, 4:45 PM
+                ]
+            },
+            {
+                id: 'slider4',
+                title: 'Stories Untold',
+                folder: 'S4/',
+                filenames: [
+                    // This slider has no images for "today" (assuming today is 27_10)
+                    'OLDTALE1000AM2510',
+                    'ANOTHERSTORY0300PM2610'
+                ]
+            }
+        ];
+
+        /**
+         * Parses a filename like "TEST0826PM2710" into an object.
+         * @param {string} filename - The image filename without extension.
+         * @returns {object|null} An object with {caption, time, date, originalFilename} or null.
+         */
+        function parseFilename(filename) {
+            // Regex: (Caption)(Time)(AM/PM)(Date)
+            const regex = /^(.+?)(\d{4})(AM|PM)(\d{4})$/i; // 'i' for case-insensitive am/pm
+            const match = filename.match(regex);
+
+            if (!match) {
+                console.warn(`Filename "${filename}" does not match expected format.`);
+                return null;
+            }
+
+            const [, caption, time, ampm, dateStr] = match;
+
+            // 1. Parse Time (e.g., "0826" + "PM")
+            let HH = parseInt(time.substring(0, 2), 10);
+            const MM = time.substring(2, 4);
+            const upperAmpm = ampm.toUpperCase();
+
+            if (upperAmpm === 'PM' && HH !== 12) {
+                HH += 12; // 1:00 PM (13) to 11:00 PM (23)
+            } else if (upperAmpm === 'AM' && HH === 12) {
+                HH = 0; // 12:00 AM (Midnight) is 00
+            }
+            // 12:00 PM (Noon) remains 12
+            
+            const formattedTime = `${String(HH).padStart(2, '0')}:${MM}`; // e.g., "20:26"
+
+            // 2. Parse Date (e.g., "2710" -> "27_10")
+            const DD = dateStr.substring(0, 2);
+            const MO = dateStr.substring(2, 4);
+            const formattedDate = `${DD}_${MO}`; // e.g., "27_10"
+
+            return {
+                caption: caption,
+                time: formattedTime,
+                date: formattedDate,
+                originalFilename: filename
+            };
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Get current date in DD_MM format
+            const now = new Date();
+            // --- FOR TESTING: Uncomment the line below to force a specific date ---
+            // const now = new Date("2025-10-27T09:00:00"); // Simulates Oct 27
+            
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+            const currentDateString = `${day}_${month}`; // e.g., "27_10"
+
+            const sliderWrappers = document.querySelectorAll('.slider-wrapper');
+
+            sliderWrappers.forEach((wrapper, index) => {
+                const sliderData = slidersData[index];
+                if (!sliderData) return;
+
+                const slider = wrapper.querySelector('.slider');
+                const prevButton = wrapper.querySelector('.prev-button');
+                const nextButton = wrapper.querySelector('.next-button');
+                const dotsContainer = wrapper.querySelector('.dots-container');
+                
+                // Filter images for the current date by parsing filenames
+                const todaysImages = sliderData.filenames
+                    .map(parseFilename) // Convert all filenames to parsed objects
+                    .filter(img => img !== null && img.date === currentDateString); // Filter for nulls and the correct date
+                
+                // Sort images by time
+                todaysImages.sort((a, b) => a.time.localeCompare(b.time));
+
+                let currentIndex = 0;
+                const totalImages = todaysImages.length;
+
+                if (totalImages === 0) {
+                    // No images for today, show message and hide controls
+                    slider.innerHTML = `<p class="no-images-message">No images scheduled for today.</p>`;
+                    prevButton.style.display = 'none';
+                    nextButton.style.display = 'none';
+                    dotsContainer.style.display = 'none';
+                    return; // Stop processing for this slider
+                }
+
+                // --- Populate Slider with Today's Images ---
+                slider.innerHTML = todaysImages.map(img => {
+                    // --- 3. EDIT '.jpg' if your images are .png, .gif, etc. ---
+                    const imgSrc = sliderData.folder + img.originalFilename + '.jpg'; 
+                    
+                    // Build the error message string
+                    const errorHtml = `<p class='no-images-message'>Error loading image:<br>${img.originalFilename}.jpg</p>`;
+                    // Build the onerror logic string
+                    // 1. Replace single quotes in the error HTML with escaped double quotes
+                    //    This makes `<p class='...'>` become `<p class=\"...\">`
+                    // 2. This new string is safely inserted into the `innerHTML += '...'` part.
+                    const onErrorLogic = `this.style.display='none'; this.parentElement.querySelector('.image-caption').style.display='none'; this.parentElement.innerHTML += '${errorHtml.replace(/'/g, '\"')}'`;
+                    
+                    return `
+                        <div class="slide">
+                            <img src="${imgSrc}" alt="${img.caption}" onerror="${onErrorLogic}">
+                            <div class="image-caption">${img.caption} &mdash; ${img.time}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                // --- Populate Dots ---
+                dotsContainer.innerHTML = ''; // Clear existing dots
+                for (let i = 0; i < totalImages; i++) {
+                    const dot = document.createElement('span');
+                    dot.classList.add('dot');
+                    dot.addEventListener('click', () => {
+                        currentIndex = i;
+                        updateSlider();
+                    });
+                    dotsContainer.appendChild(dot);
+                }
+
+                const dots = dotsContainer.querySelectorAll('.dot');
+                
+                function updateSlider() {
+                    const offset = -currentIndex * 100;
+                    slider.style.transform = `translateX(${offset}%)`;
+
+                    dots.forEach((dot, index) => {
+                        dot.classList.toggle('active', index === currentIndex);
+                    });
+                }
+
+                prevButton.addEventListener('click', () => {
+                    currentIndex = (currentIndex - 1 + totalImages) % totalImages;
+                    updateSlider();
+                });
+
+                nextButton.addEventListener('click', () => {
+                    currentIndex = (currentIndex + 1) % totalImages;
+                    updateSlider();
+                });
+
+                // --- Autoplay: 2 minutes ---
+                if (totalImages > 1) { // Only autoplay if there's more than one image
+                    setInterval(() => {
+                        nextButton.click();
+                    }, 120000); // 120,000 milliseconds = 2 minutes
+                }
+
+                // Initialize slider
+                updateSlider();
+            });
+        });
+    </script>
+
+</body>
+</html>
+
+
